@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>8日自驾路线图（高德导航版）· 上海→青岛→济南→天津→石家庄→太原→郑州→合肥→常州→上海</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Microsoft YaHei','PingFang SC',sans-serif}
+  body{background:#eef2f7}
+  .header{max-width:1200px;margin:0 auto;padding:20px 20px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+  .header h1{font-size:20px;color:#1a3a5c}
+  .header .meta{font-size:13px;color:#5a7a9a;margin-top:4px}
+  #map{max-width:1200px;height:70vh;margin:16px auto;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+  .legend{max-width:1200px;margin:0 auto 30px;background:#fff;border-radius:12px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .legend h2{font-size:15px;color:#1a3a5c;margin-bottom:12px}
+  .legend table{width:100%;border-collapse:collapse;font-size:13px}
+  .legend th{background:#e8f4fd;padding:8px 10px;text-align:left;border:1px solid #c8dce8}
+  .legend td{padding:8px 10px;border:1px solid #c8dce8;color:#2a4058}
+  .day-chip{display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600;color:#fff;background:#2b7bb9}
+  .day-chip.d1{background:#e74c3c}.day-chip.d2{background:#e67e22}.day-chip.d3{background:#f1c40f;color:#333}
+  .day-chip.d4{background:#2ecc71}.day-chip.d5{background:#1abc9c}.day-chip.d6{background:#3498db}
+  .day-chip.d7{background:#9b59b6}.day-chip.d8{background:#7f8c8d}
+  .route-note{display:flex;gap:20px;margin-bottom:10px;font-size:12px;color:#5a7a9a}
+  .route-note span{display:inline-flex;align-items:center;gap:6px}
+  .line-sample{display:inline-block;width:30px;height:3px;border-radius:2px}
+  .line-out{background:#2b7bb9}
+  .line-back{background:#e67e22}
+  .load-status{font-size:12px;color:#5a7a9a;margin-top:6px}
+</style>
+</head>
+<body>
+
+<script>
+  // 高德 Key（已配置）
+  var AMAP_KEY = 'c5d6e4eae584f7a4a47a49da9c72a08d';
+  var AMAP_JSCODE = 'f59572a8024598e76ade24709430f19d';
+  window._AMapSecurityConfig = { securityJsCode: AMAP_JSCODE };
+</script>
+
+<div class="header">
+  <div>
+    <h1>🗺️ 8 日自驾路线图（高德导航版·V5）</h1>
+    <div class="meta">真实驾车路线规划 · 总里程约 3,447 km · 8 城 · 8月1日-8月8日</div>
+  </div>
+</div>
+
+<div id="map"></div>
+<div class="load-status" id="loadStatus" style="max-width:1200px;margin:0 auto 0;padding:0 20px">加载中…</div>
+
+<div class="legend">
+  <h2>📅 逐日行程与里程（点击路线可查看明细）</h2>
+  <div class="route-note">
+    <span><span class="line-sample line-out"></span> 去程（上海→合肥）</span>
+    <span><span class="line-sample line-back"></span> 返程（合肥→常州→上海）</span>
+  </div>
+  <table>
+    <tr><th>天</th><th>路线</th><th>里程</th><th>驾驶</th></tr>
+    <tr><td><span class="day-chip d1">D1</span></td><td>上海 → 青岛 ✅</td><td id="km-0">741 km</td><td>9 h</td></tr>
+    <tr><td><span class="day-chip d2">D2</span></td><td>青岛 → 济南 ✅已玩</td><td id="km-1">355 km</td><td>3.9 h</td></tr>
+    <tr><td><span class="day-chip d3">D3</span></td><td>济南 → 天津</td><td id="km-2">330 km</td><td>3.8 h</td></tr>
+    <tr><td><span class="day-chip d4">D4</span></td><td>天津 → 石家庄</td><td id="km-3">323 km</td><td>3.6 h</td></tr>
+    <tr><td><span class="day-chip d5">D5</span></td><td>石家庄 → 太原</td><td id="km-4">223 km</td><td>3 h</td></tr>
+    <tr><td><span class="day-chip d6">D6</span></td><td>太原 → 郑州</td><td id="km-5">434 km</td><td>5.3 h</td></tr>
+    <tr><td><span class="day-chip d7">D7</span></td><td>郑州 → 合肥</td><td id="km-6">558 km</td><td>5.8 h</td></tr>
+    <tr><td><span class="day-chip d8">D8</span></td><td>合肥 → 常州 → 上海</td><td id="km-7">483 km</td><td>6 h</td></tr>
+  </table>
+</div>
+
+<script>
+// 途经城市（名称 + 经纬度）
+var stops = [
+  {name:'上海', coords:[121.4737,31.2304], day:'D1 出发 / D8 返回'},
+  {name:'青岛', coords:[120.3826,36.0671], day:'D1 住 ✅'},
+  {name:'济南', coords:[117.1201,36.6512], day:'D2 住 ✅已玩'},
+  {name:'天津', coords:[117.1906,39.1256], day:'D3 住'},
+  {name:'石家庄', coords:[114.5149,38.0428], day:'D4 住'},
+  {name:'太原', coords:[112.5489,37.8706], day:'D5 住'},
+  {name:'郑州', coords:[113.6254,34.7466], day:'D6 住'},
+  {name:'合肥', coords:[117.2272,31.8206], day:'D7 住'},
+  {name:'常州', coords:[119.9741,31.8112], day:'D8 途经玩'},
+];
+
+// 分段（9 段，常州为途经点）
+var segments = [
+  ['上海','青岛'],['青岛','济南'],['济南','天津'],['天津','石家庄'],
+  ['石家庄','太原'],['太原','郑州'],['郑州','合肥'],['合肥','常州'],['常州','上海']
+];
+
+function findStop(name){ return stops.filter(s=>s.name===name)[0]; }
+
+function initMap(){
+  var map = new AMap.Map('map', {
+    zoom: 6,
+    center: [115.0, 34.5],
+    mapStyle: 'amap://styles/normal'
+  });
+
+  // 起点/终点 + 途经点标记
+  stops.forEach(function(s){
+    var marker = new AMap.Marker({
+      position: s.coords,
+      title: s.name,
+      label: { content: s.name, direction: 'top', offset: new AMap.Pixel(0,-4), style:{fontSize:'13px',fontWeight:'bold',color:'#1a3a5c',background:'#fff',border:'1px solid #c8dce8',borderRadius:'4px',padding:'2px 6px'} },
+      icon: new AMap.Icon({ size: new AMap.Size(14,14), image: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_r.png', imageOffset: new AMap.Pixel(0,0) })
+    });
+    marker.on('click', function(){ map.setCenter(s.coords); map.setZoom(11); });
+    map.add(marker);
+  });
+
+  // 逐段驾车路线规划
+  var driving = new AMap.Driving({
+    policy: AMap.DrivingPolicy.LEAST_TIME,
+    hideMarkers: true,
+    showTraffic: false
+  });
+
+  var idx = 0;
+  var totalPlanned = 0;
+  var plannedKm = 0;
+  var failed = [];
+
+  function planNext(){
+    if (idx >= segments.length) { finish(); return; }
+    var seg = segments[idx];
+    var from = findStop(seg[0]).coords;
+    var to = findStop(seg[1]).coords;
+    setTimeout(function(){
+      driving.search(from, to, function(status, result){
+        if (status === 'complete' && result.routes && result.routes.length) {
+          try {
+            var route = result.routes[0];
+            var km = Math.round(route.distance / 1000);
+            var color = (seg[0]==='合肥' || seg[0]==='常州') ? '#e67e22' : '#2b7bb9';
+            var path = [];
+            route.steps.forEach(function(s){ path = path.concat(s.path); });
+            if (!path.length) path = route.path;
+            var polyline = new AMap.Polyline({
+              path: path,
+              strokeColor: color, strokeWeight: 6, strokeOpacity: 0.85,
+              strokeStyle: 'dashed', strokeDasharray: [8,8],
+              extData: seg
+            });
+            polyline.on('click', function(){
+              map.setZoomAndCenter(10, from);
+              infoWindow.setContent(
+                '<div style="font-size:13px;line-height:1.8">' +
+                '<b>'+seg[0]+' → '+seg[1]+'</b><br>' +
+                '📏 实际里程：约 '+km+' km<br>' +
+                '⏱ 预计驾驶：约 '+Math.round(route.time/3600)+' 小时</div>'
+              );
+              infoWindow.open(map, from);
+            });
+            map.add(polyline);
+            plannedKm += km;
+            totalPlanned++;
+            var cell = document.querySelector('#km-'+idx);
+            if (cell) cell.textContent = km + ' km';
+          } catch(e) {
+            failed.push(seg[0]+'→'+seg[1] + '(绘制错误:'+e.message+')');
+          }
+        } else {
+          failed.push(seg[0]+'→'+seg[1] + '(' + (result ? result.info : status) + ')');
+        }
+        idx++;
+        planNext();
+      });
+    }, 600);
+  }
+
+  function finish(){
+    var msg = '✅ 路线规划完成：共 '+totalPlanned+' / '+segments.length+' 段，实际驾车里程约 '+plannedKm+' km（点击路线查看每段明细）';
+    if (failed.length) msg += ' | 失败：'+failed.join('、');
+    document.getElementById('loadStatus').textContent = msg;
+    map.setFitView(null, false, [60,60,60,60]);
+  }
+
+  planNext();
+
+  var infoWindow = new AMap.InfoWindow({ offset: new AMap.Pixel(0,-30) });
+}
+
+// 等待高德加载
+function loadMap(){
+  if (window.AMap) { initMap(); }
+  else { setTimeout(loadMap, 300); }
+}
+window.onload = function(){
+  var s = document.createElement('script');
+  s.src = 'https://webapi.amap.com/maps?v=2.0&key='+AMAP_KEY+'&plugin=AMap.Driving';
+  s.onload = loadMap;
+  s.onerror = function(){ document.getElementById('loadStatus').textContent = '❌ 高德 JS API 加载失败'; };
+  document.body.appendChild(s);
+};
+</script>
+
+</body>
+</html>
